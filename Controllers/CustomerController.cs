@@ -13,8 +13,8 @@ namespace FinalProjeckt.Controllers
         [HttpGet]
         public IActionResult GetAllCustomer()
         {
-            var CustomerDb = FakeDB.CustomerDb.ToList();
-
+            var CustomerDb = FakeDB.CustomerDb.ToList();   
+ 
             return Ok(CustomerDb);
         }
 
