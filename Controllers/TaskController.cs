@@ -1,91 +1,68 @@
 ﻿using FinalProjeckt.Data;
 using FinalProjeckt.Data.DTOs;
 using FinalProjeckt.Data.Models;
+using FinalProjeckt.Services;
 using Microsoft.AspNetCore.Mvc;
 using static System.Reflection.Metadata.BlobBuilder;
 
 namespace FinalProjeckt.Controllers
 {
-
     [Route("api/[controller]")]
     [ApiController]
-    public class TaskController:ControllerBase
-    {
-        [HttpGet]
-        public IActionResult GetAllTasks()
-        {
-            var TaskDb = FakeDB.TasksDb.ToList();
 
-            return Ok(TaskDb);
+    public class TaskController : ControllerBase
+    {
+
+        private ITaskService _taskService;
+        public TaskController(ITaskService taskService)
+        {
+            _taskService = taskService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllTask()
+        {
+            var taskDb = await _taskService.GetTaskAsync();
+
+            return Ok(taskDb);
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetTaskById(int id)
+        public async Task<IActionResult> GetTaskById(int id)
         {
-            var TasksDb = FakeDB.TasksDb.FirstOrDefault(x => x.Id == id);
+            var taskDb = await _taskService.GetTaskByIdAsync(id);
 
-            if (TasksDb == null)
+            if (taskDb == null)
             {
                 return NotFound($"Task with id = {id} not found");
             }
             else
             {
-                return Ok(TasksDb);
+                return Ok(taskDb);
             }
         }
 
         [HttpDelete("Delete/{id}")]
-        public IActionResult DeleteTaskById(int id)
+        public async Task<IActionResult> DeleteTaskById(int id)
         {
-            var TasksDb = FakeDB.TasksDb.FirstOrDefault(x => x.Id == id);
-            if (TasksDb == null)
-            {
-                return NotFound($"Task with id = {id} not found");
-            }
-            else
-            {
-                FakeDB.TasksDb.Remove(TasksDb);
-                return Ok($"Task with id = {id} was removed");
-            }
+            await _taskService.DeleteTaskByIdAsync(id);
+
+            return Ok("Deleted");
         }
         [HttpPost]
-        public IActionResult PostTasks([FromBody] PostTaskDto payload)
+        public async Task<IActionResult> PostTask([FromBody] PostTaskDto payload)
         {
-            var newTask = new Tasks()
-            {
-                Id = new Random().Next(10, 100),
-                Title = payload.Title,
-                Description = payload.Description,
-                DueDate = payload.DueDate,
-                Status = payload.Status
-            };
+            await _taskService.PostTaskAsync(payload);
 
-            FakeDB.TasksDb.Add(newTask);
-
-            return Ok("New Book created");
+            return Ok("New Task created");
         }
-
 
         [HttpPut("{id}")]
-        public IActionResult UpdateById(int id, [FromBody] PutTaskDto payload)
+        public async Task<IActionResult> UpdateTaskById(int id, [FromBody] PutTaskDto payload)
         {
-            var TasksDb = FakeDB.TasksDb.FirstOrDefault(x => x.Id == id);
+            await _taskService.UpdateTaskAsync(id, payload);
 
-            if (TasksDb == null)
-            {
-                return NotFound($"Task with id = {id} not found");
-            }
-            else
-            {
-                TasksDb.Title = payload.Title;
-                TasksDb.Description = payload.Description;
-                TasksDb.DueDate = payload.DueDate;
-                TasksDb.Status = payload.Status;
-
-
-                return Ok($"Task with id = {id} was updated");
-            }
+            return Ok($"Task with id = {id} was updated");
         }
-
     }
 }

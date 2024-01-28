@@ -3,90 +3,67 @@ using FinalProjeckt.Data.Models;
 using FinalProjeckt.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using FinalProjeckt.Services;
 
 namespace FinalProjeckt.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+
     public class ProjectController : ControllerBase
     {
-        [HttpGet]
-        public IActionResult GetAllProjects()
-        {
-            var ProjectDb = FakeDB.ProjectDb.ToList();
 
-            return Ok(ProjectDb);
+        private IProjectService _projectService;
+        public ProjectController(IProjectService projectService)
+        {
+            _projectService = projectService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllProject()
+        {
+            var projectDb = await _projectService.GetProjectAsync();
+
+            return Ok(projectDb);
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetProjectById(int id)
+        public async Task<IActionResult> GetProjectById(int id)
         {
-            var ProjectsDb = FakeDB.ProjectDb.FirstOrDefault(x => x.Id == id);
+            var projectDb = await _projectService.GetProjectByIdAsync(id);
 
-            if (ProjectsDb == null)
+            if (projectDb == null)
             {
                 return NotFound($"Project with id = {id} not found");
             }
             else
             {
-                return Ok(ProjectsDb);
+                return Ok(projectDb);
             }
         }
 
         [HttpDelete("Delete/{id}")]
-        public IActionResult DeleteProjectById(int id)
+        public async Task<IActionResult> DeleteProjectById(int id)
         {
-            var ProjectsDb = FakeDB.ProjectDb.FirstOrDefault(x => x.Id == id);
-            if (ProjectsDb == null)
-            {
-                return NotFound($"Project with id = {id} not found");
-            }
-            else
-            {
-                FakeDB.ProjectDb.Remove(ProjectsDb);
-                return Ok($"Project with id = {id} was removed");
-            }
+            await _projectService.DeleteProjectByIdAsync(id);
+
+            return Ok("Deleted");
         }
         [HttpPost]
-        public IActionResult PostProject([FromBody] PostProjectDto payload)
+        public async Task<IActionResult> PostProject([FromBody] PostProjectDto payload)
         {
-            var newProject = new Project()
-            {
-                Id = new Random().Next(10, 100),
-                Name = payload.Name,
-                Description = payload.Description,
-                StartDate = payload.StartDate,
-                EndDate = payload.EndDate
-            };
+            await _projectService.PostProjectAsync(payload);
 
-            FakeDB.ProjectDb.Add(newProject);
-
-            return Ok("New Project");
+            return Ok("New Project created");
         }
-
-
 
         [HttpPut("{id}")]
-        public IActionResult UpdateProjectsById(int id, [FromBody] PutProjectDto payload)
+        public async Task<IActionResult> UpdateProjectById(int id, [FromBody] PutProjectDto payload)
         {
-            var ProjectsDb = FakeDB.ProjectDb.FirstOrDefault(x => x.Id == id);
+            await _projectService.UpdateProjectAsync(id, payload);
 
-            if (ProjectsDb == null)
-            {
-                return NotFound($"Project with id = {id} not found");
-            }
-            else
-            {
-                ProjectsDb.Name = payload.Name;
-                ProjectsDb.Description = payload.Description;
-                ProjectsDb.StartDate = payload.StartDate;
-                ProjectsDb.EndDate = payload.EndDate;
-
-
-                return Ok($"Project with id = {id} was updated");
-            }
+            return Ok($"Project with id = {id} was updated");
         }
-
     }
 }
 

@@ -3,90 +3,66 @@ using FinalProjeckt.Data.Models;
 using FinalProjeckt.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using FinalProject.Services;
 
 namespace FinalProjeckt.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+
     public class UserController : ControllerBase
     {
-        [HttpGet]
-        public IActionResult GetAllUsers()
-        {
-            var UserDb = FakeDB.UserDb.ToList();
 
-            return Ok(UserDb);
+        private IUserService _userService;
+        public UserController(IUserService userService)
+        {
+            _userService = userService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllUser()
+        {
+            var userDb = await _userService.GetUserAsync();
+
+            return Ok(userDb);
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetUserById(int id)
+        public async Task<IActionResult> GetUserById(int id)
         {
-            var UsersDb = FakeDB.UserDb.FirstOrDefault(x => x.Id == id);
+            var userDb = await _userService.GetUserByIdAsync(id);
 
-            if (UsersDb == null)
-            {
-                return NotFound($"Task with id = {id} not found");
-            }
-            else
-            {
-                return Ok(UsersDb);
-            }
-        }
-
-        [HttpDelete("Delete/{id}")]
-        public IActionResult DeleteUserById(int id)
-        {
-            var UsersDb = FakeDB.UserDb.FirstOrDefault(x => x.Id == id);
-            if (UsersDb == null)
-            {
-                return NotFound($"users with id = {id} not found");
-            }
-            else
-            {
-                FakeDB.UserDb.Remove(UsersDb);
-                return Ok($"user with id = {id} was removed");
-            }
-        }
-        [HttpPost]
-        public IActionResult PostUser([FromBody] PostUserDto payload)
-        {
-            var newUser = new User()
-            {
-                Id = new Random().Next(10, 100),
-                FirstName= payload.FirstName,
-                LastName = payload.LastName,
-                Email = payload.Email,
-                Role = payload.Role
-            };
-
-            FakeDB.UserDb.Add(newUser);
-
-            return Ok("New user");
-        }
-
-
-
-        [HttpPut("{id}")]
-        public IActionResult UpdateTasksById(int id, [FromBody] PutUserDto payload)
-        {
-            var UsersDb = FakeDB.UserDb.FirstOrDefault(x => x.Id == id);
-
-            if (UsersDb == null)
+            if (userDb == null)
             {
                 return NotFound($"User with id = {id} not found");
             }
             else
             {
-                UsersDb.FirstName = payload.FirstName;
-                UsersDb.LastName = payload.LastName;
-                UsersDb.Email = payload.Email;
-                UsersDb.Role= payload.Role;
-
-
-                return Ok($"User with id = {id} was updated");
+                return Ok(userDb);
             }
         }
 
+        [HttpDelete("Delete/{id}")]
+        public async Task<IActionResult> DeleteBooksById(int id)
+        {
+            await _userService.DeleteUserByIdAsync(id);
+
+            return Ok("Deleted");
+        }
+        [HttpPost]
+        public async Task<IActionResult> PostUser([FromBody] PostUserDto payload)
+        {
+            await _userService.PostUserAsync(payload);
+
+            return Ok("New User created");
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateUserById(int id, [FromBody] PutUserDto payload)
+        {
+            await _userService.UpdateUserAsync(id, payload);
+
+            return Ok($"User with id = {id} was updated");
+        }
     }
 }
-

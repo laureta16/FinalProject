@@ -3,92 +3,66 @@ using FinalProjeckt.Data.Models;
 using FinalProjeckt.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using FinalProjeckt.Services;
 
 namespace FinalProjeckt.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+
     public class CustomerController : ControllerBase
     {
-        [HttpGet]
-        public IActionResult GetAllCustomer()
+
+        private ICustomerService _customerService;
+        public CustomerController(ICustomerService customerService)
         {
-            var CustomerDb = FakeDB.CustomerDb.ToList();   
- 
-            return Ok(CustomerDb);
+            _customerService = customerService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllCustomer()
+        {
+            var customerDb = await _customerService.GetCustomerAsync();
+
+            return Ok(customerDb);
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetCustomerById(int id)
+        public async Task<IActionResult> GetCustomerById(int id)
         {
-            var CustomersDb = FakeDB.CustomerDb.FirstOrDefault(x => x.Id == id);
+            var customerDb = await _customerService.GetCustomerByIdAsync(id);
 
-            if (CustomersDb == null)
+            if (customerDb == null)
             {
                 return NotFound($"Customer with id = {id} not found");
             }
             else
             {
-                return Ok(CustomersDb);
+                return Ok(customerDb);
             }
         }
 
         [HttpDelete("Delete/{id}")]
-        public IActionResult DeleteCustomerById(int id)
+        public async Task<IActionResult> DeleteCustomerById(int id)
         {
-            var CustomersDb = FakeDB.CustomerDb.FirstOrDefault(x => x.Id == id);
-            if (CustomersDb == null)
-            {
-                return NotFound($"Customer with id = {id} not found");
-            }
-            else
-            {
-                FakeDB.CustomerDb.Remove(CustomersDb);
-                return Ok($"Customer with id = {id} was removed");
-            }
+            await _customerService.DeleteCustomerByIdAsync(id);
+
+            return Ok("Deleted");
         }
         [HttpPost]
-        public IActionResult PostCustomer([FromBody] PostCustomerDto payload)
+        public async Task<IActionResult> PostCustomer([FromBody] PostCustomerDto payload)
         {
-            var newCustomer = new Customer()
-            {
-                Id = new Random().Next(10, 100),
-                Name = payload.Name,
-                ContactPerson = payload.ContactPerson,
-                Email = payload.Email,
-                Phone = payload.Phone
-            };
+            await _customerService.PostCustomerAsync(payload);
 
-            FakeDB.CustomerDb.Add(newCustomer);
-
-            return Ok("New user");
+            return Ok("New Customer created");
         }
-
-
 
         [HttpPut("{id}")]
-        public IActionResult UpdateCustomerById(int id, [FromBody] PutCustomerDto payload)
+        public async Task<IActionResult> UpdateCustomerById(int id, [FromBody] PutCustomerDto payload)
         {
-            var CustomersDb = FakeDB.CustomerDb.FirstOrDefault(x => x.Id == id);
+            await _customerService.UpdateCustomerAsync(id, payload);
 
-            if (CustomersDb == null)
-            {
-                return NotFound($"Customer with id = {id} not found");
-            }
-            else
-            {
-                CustomersDb.Name = payload.Name;
-                CustomersDb.ContactPerson = payload.ContactPerson;
-                CustomersDb.Email = payload.Email;
-                CustomersDb.Phone = payload.Phone;
-
-
-                return Ok($"Customer with id = {id} was updated");
-            }
+            return Ok($"Customer with id = {id} was updated");
         }
-
     }
 }
-
-
-
